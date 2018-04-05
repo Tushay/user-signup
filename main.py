@@ -16,7 +16,7 @@ def user():
     password = request.form['password']
     verify_password = request.form['verify_password']
 
-
+    
 
 
 
