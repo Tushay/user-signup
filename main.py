@@ -1,57 +1,75 @@
-from flask import Flask, request, redirect, render_template
+from flask import Flask, render_template, request, redirect
 import cgi
 
 app = Flask(__name__)
-
 app.config['DEBUG'] = True
 
-@app.route('/error', methods=['POST'])
-def validate():
+def ver_email(email):
+    if email != '':
+        atsign = 0
+        period = 0
+        for char in email:
+            if char == '@':
+                atsign += 1
+            elif char == '.':
+                period += 1
+        if ((20 < len(email) or len(email) < 3) or (atsign != 1) or (period != 1) or (" " in email)):
+            return False
+        else:
+            return True
+    else:
+        return True
+
+@app.route('/signup', methods=['POST'])
+def signup():
     username = request.form['username']
     password = request.form['password']
-    verify_pass = request.form['verify-pass']
+    ver_pass = request.form['ver_pass']
     email = request.form['email']
+    Error = False
+    error = {
+        'user' : "",
+        'pass':"",
+        'match':"",
+        'email':""
+    }
 
-    username_error = ''
-    password_error = ''
-    email_error = ''
-    verify_error = ''
-
-
-    if (not username) or (username.strip() == '') or ((len(username) > 20 or len(username) < 3)) or (' ' in username):
-        username_error = "That's not a valid username"
-
-    if (not password) or (password.strip() == '') or ((len(password) > 20 or len(password) < 3)) or (' ' in password):
-            password_error = "That's not a valid password"
-
-    if (password != verify_pass) or (not verify_pass):
-        verify_error = "Passwords don't match"
-
-    if email == '':
-        email = ''
+    if (username == "" or " " in username or 3 > len(username) or len(username) > 20):
+        error['user'] = "That's not a valid username"
+        Error = True
+        pass
     else:
-        if ('@' and '.') not in email:
-            email_error = "That's not a valid email"
-    
-    if (not username_error) and (not password_error) and (not verify_error) and (not email_error):
-        username = str(username)        
-        return redirect('/welcome?user={0}'.format(username))
-    else:
-        return render_template('edit.html', username_error = username_error, 
-            password_error = password_error, verify_error = verify_error,
-            email_error = email_error)    
+        pass
 
-@app.route('/welcome', methods=['GET', 'POST'])
-def success():
-    username = ''
-    if request.method == 'POST':
-        username = request.form['username']
-    return render_template('welcome.html', username = username)
+    if (password == "" or " " in password or 20 < len(password) or len(password) < 3):
+        error['pass'] = "That's not a valid password"
+        Error = True
+        pass
+    else:
+        pass
+
+    if (ver_pass != password or ver_pass == ""):
+        error['match'] = "Passwords don't match"
+        Error = True
+        pass
+    else:
+        pass 
+
+    if (ver_email(email) != True):
+        error['email'] = "That's not a valid email"
+        Error = True
+        pass
+    else:
+        pass
+
+    if (Error):
+        return render_template('/signup.html', username=username, error=error)
+    else:
+        return render_template('/welcome.html', username=username, email=email)
 @app.route('/')
 def index():
-    return render_template('edit.html')
-
+    compound_error = request.args.get('error')
+    return render_template('signup.html', error=compound_error and cgi.escape(compound_error, quote=True))
 
 app.run()
-
 
